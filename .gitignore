@@ -1,5 +1,2 @@
 # Compiled Python bytecode
 *.py[cod]
-
-# Data files
-test/train/data/
