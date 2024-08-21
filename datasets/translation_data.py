@@ -1,7 +1,7 @@
 import os
 import zipfile
 import requests
-from synth_mind.supervised.data import ItemsDataset, SplitData
+from auto_mind.supervised.data import ItemsDataset, SplitData
 from lib.dataset_data import Datasource
 from lib import data_utils
 

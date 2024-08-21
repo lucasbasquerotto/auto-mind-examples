@@ -2,7 +2,7 @@ import os
 import requests
 import zipfile
 from typing import Tuple
-from synth_mind.supervised.data import ItemsDataset, SplitData
+from auto_mind.supervised.data import ItemsDataset, SplitData
 from lib.dataset_data import LabeledDatasource
 from lib import data_utils
 

@@ -9,10 +9,10 @@ from matplotlib.figure import Figure
 from matplotlib.backends.backend_pdf import PdfPages
 from matplotlib.axes import Axes
 import matplotlib.pyplot as plt
-from synth_mind.supervised.handlers import (
+from auto_mind.supervised.handlers import (
     MetricsCalculator, MetricsCalculatorParams, BatchExecutor, BatchExecutorParams)
-from synth_mind.supervised.data import DatasetGroup
-from synth_mind.supervised.data import MinimalFullState
+from auto_mind.supervised.data import DatasetGroup
+from auto_mind.supervised.data import MinimalFullState
 import warnings
 
 M = typing.TypeVar("M")

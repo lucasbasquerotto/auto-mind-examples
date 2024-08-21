@@ -4,7 +4,7 @@ import requests
 import typing
 from torchvision import datasets as tv_datasets, transforms
 from lib.dataset_data import Datasource
-from synth_mind.supervised.data import DatasetGroup
+from auto_mind.supervised.data import DatasetGroup
 
 class HymenopteraData(Datasource[tuple[typing.Any, typing.Any]]):
     def __init__(

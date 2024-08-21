@@ -9,7 +9,7 @@ from torchvision import tv_tensors
 from torchvision.transforms.v2 import functional as F
 from torch.utils.data import Subset
 from torchvision.transforms import v2 as T
-from synth_mind.supervised.data import DatasetGroup
+from auto_mind.supervised.data import DatasetGroup
 from lib.dataset_data import Datasource
 
 def get_transform(train: bool):

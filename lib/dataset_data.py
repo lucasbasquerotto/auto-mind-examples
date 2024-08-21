@@ -8,7 +8,7 @@ import torch
 from torch.utils.data import Dataset, DataLoader
 from typing import Callable, Generic, TypeVar
 from torch.nn.utils.rnn import pad_sequence
-from synth_mind.supervised.data import DatasetGroup, IterDataset, SplitData
+from auto_mind.supervised.data import DatasetGroup, IterDataset, SplitData
 from lib import data_utils
 
 T = TypeVar("T")
