@@ -19,3 +19,16 @@ git clone https://github.com/yourusername/auto-mind-examples.git
 cd auto-mind-examples
 pip install -r requirements.txt
 ```
+
+## Examples - Supervised Learning
+
+- [Quickstart](supervised/quickstart.ipynb)
+- [Quickstart (Detailed)](supervised/quickstart_detailed.ipynb)
+- [Text classification with the torchtext library](supervised/text_sentiment_ngrams.ipynb)
+- [NLP From Scratch: Classifying Names with a Character-Level RNN](supervised/char_rnn_classification.ipynb)
+- [NLP From Scratch: Generating Names with a Character-Level RNN](supervised/char_rnn_generation.ipynb)
+- [NLP From Scratch: Translation with a Sequence to Sequence Network and Attention](supervised/seq2seq_translation.ipynb)
+- [Language Translation with nn.Transformer and torchtext](supervised/translation_transformer.ipynb)
+- [Spatial Transformer Networks Tutorial](supervised/spatial_transformer.ipynb)
+- [TorchVision Object Detection Finetuning Tutorial](supervised/torchvision_tutorial.ipynb)
+- [Transfer Learning for Computer Vision Tutorial](supervised/transfer_learning.ipynb)
