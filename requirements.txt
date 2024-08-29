@@ -7,4 +7,4 @@ seaborn==0.13.2
 shap==0.46.0
 torch==2.2.1
 torchtext==0.17.1
-torchvision==0.17.1
+torchvision==0.17.2
