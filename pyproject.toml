@@ -1,0 +1,21 @@
+[project]
+name = "auto_mind_examples"
+version = "0.0.0"
+authors = [
+  { name="Lucas Basquerotto", email="lucasbasquerotto@gmail.com" },
+]
+description = "AutoMind Examples"
+readme = "README.md"
+requires-python = ">=3.8"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+
+[project.urls]
+Homepage = "https://github.com/lucasbasquerotto/auto-mind-examples"
+Issues = "https://github.com/lucasbasquerotto/auto-mind-examples/issues"
+
+[tool.ruff]
+lint.ignore = ["E741"] # ambiguous variable name

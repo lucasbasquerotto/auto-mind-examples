@@ -2,8 +2,8 @@ import os
 import zipfile
 import requests
 from auto_mind.supervised.data import ItemsDataset, SplitData
-from lib.dataset_data import Datasource
-from lib import data_utils
+from src.lib.dataset_data import Datasource
+from src.lib import data_utils
 
 eng_prefixes = (
     "i am ", "i m ",
@@ -14,7 +14,11 @@ eng_prefixes = (
     "they are", "they re "
 )
 
-def _filter_pair(pair: tuple[str, str], max_length: int | None, filter_sentences: bool):
+def _filter_pair(
+    pair: tuple[str, str],
+    max_length: int | None,
+    filter_sentences: bool,
+) -> bool:
     input = data_utils.normalize_string(pair[0])
     target = data_utils.normalize_string(pair[1])
 
@@ -35,7 +39,11 @@ def _filter_pair(pair: tuple[str, str], max_length: int | None, filter_sentences
         (len(target.split(' ')) < max_length))
 
 
-def _filter_pairs(pairs: list[tuple[str, str]], max_length: int | None, filter_sentences: bool):
+def _filter_pairs(
+    pairs: list[tuple[str, str]],
+    max_length: int | None,
+    filter_sentences: bool,
+) -> list[tuple[str, str]]:
     return [
         (pair[0], pair[1])
         for pair in pairs
@@ -43,18 +51,18 @@ def _filter_pairs(pairs: list[tuple[str, str]], max_length: int | None, filter_s
 
 class TranslationData(Datasource[tuple[str, str]]):
     def __init__(
-            self,
-            root_path: str,
-            lang1: str,
-            lang2: str,
-            split_data: SplitData,
-            max_length: int | None = None,
-            reverse=False,
-            normalize=False,
-            autoencoder=False,
-            filter_sentences=True,
-            random_seed: int | None = None):
-
+        self,
+        root_path: str,
+        lang1: str,
+        lang2: str,
+        split_data: SplitData,
+        max_length: int | None = None,
+        reverse: bool = False,
+        normalize: bool = False,
+        autoencoder: bool = False,
+        filter_sentences: bool = True,
+        random_seed: int | None = None,
+    ) -> None:
         url = 'https://download.pytorch.org/tutorial/data.zip'
 
         file_name = f'{lang1}-{lang2}.txt'
@@ -73,7 +81,7 @@ class TranslationData(Datasource[tuple[str, str]]):
                     if os.path.isfile(file_path_tmp):
                         os.unlink(file_path_tmp)
 
-                response = requests.get(url)
+                response = requests.get(url, timeout=1000)
 
                 # download zip to zip_path
                 with open(zip_path, 'wb') as f:

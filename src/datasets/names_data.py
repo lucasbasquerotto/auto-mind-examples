@@ -1,13 +1,13 @@
 import os
-import requests
 import zipfile
 from typing import Tuple
+import requests
 from auto_mind.supervised.data import ItemsDataset, SplitData
-from lib.dataset_data import LabeledDatasource
-from lib import data_utils
+from src.lib.dataset_data import LabeledDatasource
+from src.lib import data_utils
 
 class NamesData(LabeledDatasource[str, int, str]):
-    def __init__(self, root_path: str, split_data: SplitData, random_seed=42):
+    def __init__(self, root_path: str, split_data: SplitData, random_seed: int | None) -> None:
         url = 'https://download.pytorch.org/tutorial/data.zip'
 
         zip_base_path = f'{root_path}/zips/names'
@@ -25,7 +25,7 @@ class NamesData(LabeledDatasource[str, int, str]):
                     if os.path.isfile(file_path):
                         os.unlink(file_path)
 
-                response = requests.get(url)
+                response = requests.get(url, timeout=1000)
 
                 # download zip to zip_path
                 with open(zip_path, 'wb') as f:
@@ -67,7 +67,7 @@ class NamesData(LabeledDatasource[str, int, str]):
         dataset = ItemsDataset(items=items)
         datasets = split_data.split(
             dataset=dataset,
-            shuffle=True if split_data.val_percent or split_data.test_percent else False,
+            shuffle=bool(split_data.val_percent or split_data.test_percent),
             random_seed=random_seed)
 
         super().__init__(datasets=datasets, all_labels=all_labels)

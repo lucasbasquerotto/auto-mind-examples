@@ -1,27 +1,27 @@
 import os
-import torch
 import zipfile
-import requests
 import typing
+import torch
+import requests
 from torchvision.io import read_image
 from torchvision.ops.boxes import masks_to_boxes
 from torchvision import tv_tensors
 from torchvision.transforms.v2 import functional as F
-from torch.utils.data import Subset
 from torchvision.transforms import v2 as T
+from torch.utils.data import Subset
 from auto_mind.supervised.data import DatasetGroup
-from lib.dataset_data import Datasource
+from src.lib.dataset_data import Datasource
 
-def get_transform(train: bool):
+def get_transform(train: bool) -> T.Compose:
     transforms = []
     if train:
         transforms.append(T.RandomHorizontalFlip(0.5))
-    transforms.append(T.ToDtype(torch.float, scale=True))
-    transforms.append(T.ToPureTensor())
+    transforms.append(T.ToDtype(torch.float, scale=True)) # pylint: disable=unexpected-keyword-arg
+    transforms.append(T.ToPureTensor()) # pylint: disable=no-member
     return T.Compose(transforms)
 
 class PennFudanDataset(torch.utils.data.Dataset[tuple[typing.Any, typing.Any]]):
-    def __init__(self, root, transforms):
+    def __init__(self, root: str, transforms: typing.Any) -> None:
         self.root = root
         self.transforms = transforms
         # load all image files, sorting them to
@@ -29,7 +29,7 @@ class PennFudanDataset(torch.utils.data.Dataset[tuple[typing.Any, typing.Any]]):
         self.imgs = list(sorted(os.listdir(os.path.join(root, "PNGImages"))))
         self.masks = list(sorted(os.listdir(os.path.join(root, "PedMasks"))))
 
-    def __getitem__(self, idx):
+    def __getitem__(self, idx: int) -> tuple[typing.Any, typing.Any]:
         # load images and masks
         img_path = os.path.join(self.root, "PNGImages", self.imgs[idx])
         mask_path = os.path.join(self.root, "PedMasks", self.masks[idx])
@@ -60,7 +60,10 @@ class PennFudanDataset(torch.utils.data.Dataset[tuple[typing.Any, typing.Any]]):
         img = tv_tensors.Image(img)
 
         target = {}
-        target["boxes"] = tv_tensors.BoundingBoxes(boxes, format="XYXY", canvas_size=F.get_size(img)) # type: ignore
+        target["boxes"] = tv_tensors.BoundingBoxes(
+            boxes,
+            format="XYXY",
+            canvas_size=F.get_size(img)) # pylint: disable=no-member
         target["masks"] = tv_tensors.Mask(masks)
         target["labels"] = labels
         target["image_id"] = image_id
@@ -72,15 +75,15 @@ class PennFudanDataset(torch.utils.data.Dataset[tuple[typing.Any, typing.Any]]):
 
         return img, target
 
-    def __len__(self):
+    def __len__(self) -> int:
         return len(self.imgs)
 
 class PennFudanData(Datasource[tuple[typing.Any, typing.Any]]):
     def __init__(
-            self,
-            root_path: str,
-            max_length: int | None = None):
-
+        self,
+        root_path: str,
+        max_length: int | None = None,
+    ) -> None:
         url = 'https://www.cis.upenn.edu/~jshi/ped_html/PennFudanPed.zip'
 
         zip_base_path = f'{root_path}/zip'
@@ -97,7 +100,7 @@ class PennFudanData(Datasource[tuple[typing.Any, typing.Any]]):
                     if os.path.isfile(file_path_tmp):
                         os.unlink(file_path_tmp)
 
-                response = requests.get(url)
+                response = requests.get(url, timeout=1000)
 
                 # download zip to zip_path
                 with open(zip_path, 'wb') as f:
@@ -109,14 +112,16 @@ class PennFudanData(Datasource[tuple[typing.Any, typing.Any]]):
             with zipfile.ZipFile(zip_path, 'r') as zip_ref:
                 zip_ref.extractall(zip_dir_path)
 
-        train_dataset = PennFudanDataset(f'{zip_dir_path}/PennFudanPed', get_transform(train=True))
-        test_dataset = PennFudanDataset(f'{zip_dir_path}/PennFudanPed', get_transform(train=False))
+        train_ini_dataset = PennFudanDataset(
+            f'{zip_dir_path}/PennFudanPed', get_transform(train=True))
+        test_ini_dataset = PennFudanDataset(
+            f'{zip_dir_path}/PennFudanPed', get_transform(train=False))
 
         # split the dataset in train, validation and test set
-        indices = torch.randperm(len(train_dataset)).tolist()
-        train_dataset = Subset(train_dataset, indices[:-50])
-        validation_dataset = Subset(test_dataset, indices[-50:-25])
-        test_dataset = Subset(test_dataset, indices[-25:])
+        indices = torch.randperm(len(train_ini_dataset)).tolist()
+        train_dataset = Subset(train_ini_dataset, indices[:-50])
+        validation_dataset = Subset(test_ini_dataset, indices[-50:-25])
+        test_dataset = Subset(test_ini_dataset, indices[-25:])
 
         datasets = DatasetGroup(
             train=train_dataset,

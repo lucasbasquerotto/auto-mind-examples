@@ -1,17 +1,17 @@
 import os
 import zipfile
-import requests
 import typing
+import requests
 from torchvision import datasets as tv_datasets, transforms
-from lib.dataset_data import Datasource
 from auto_mind.supervised.data import DatasetGroup
+from src.lib.dataset_data import Datasource
 
 class HymenopteraData(Datasource[tuple[typing.Any, typing.Any]]):
     def __init__(
         self,
         root_path: str,
         max_length: int | None = None,
-    ):
+    ) -> None:
         url = 'https://download.pytorch.org/tutorial/hymenoptera_data.zip'
 
         zip_base_path = f'{root_path}/zip'
@@ -28,7 +28,7 @@ class HymenopteraData(Datasource[tuple[typing.Any, typing.Any]]):
                     if os.path.isfile(file_path_tmp):
                         os.unlink(file_path_tmp)
 
-                response = requests.get(url)
+                response = requests.get(url, timeout=1000)
 
                 # download zip to zip_path
                 with open(zip_path, 'wb') as f:

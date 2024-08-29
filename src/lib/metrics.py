@@ -1,5 +1,7 @@
+# mypy: disable-error-code=attr-defined
 import os
 import typing
+import warnings
 import torch
 import seaborn as sns
 import pandas as pd
@@ -13,7 +15,6 @@ from auto_mind.supervised.handlers import (
     MetricsCalculator, MetricsCalculatorParams, BatchExecutor, BatchExecutorParams)
 from auto_mind.supervised.data import DatasetGroup
 from auto_mind.supervised.data import MinimalFullState
-import warnings
 
 M = typing.TypeVar("M")
 
@@ -21,22 +22,37 @@ COLOR_TRAIN = '#1f77b4'
 COLOR_VALIDATION = '#ff7f0e'
 COLOR_TEST = '#2ca02c'
 
-PALETTE = ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#7f7f7f', '#bcbd22', '#17becf']
+PALETTE = [
+    '#1f77b4',
+    '#ff7f0e',
+    '#2ca02c',
+    '#d62728',
+    '#9467bd',
+    '#8c564b',
+    '#e377c2',
+    '#7f7f7f',
+    '#bcbd22',
+    '#17becf',
+]
 
-def get_color(key: str):
+def get_color(key: str) -> str | None:
     if key == 'train':
         return COLOR_TRAIN
-    elif key == 'validation':
+    if key == 'validation':
         return COLOR_VALIDATION
-    elif key == 'test':
+    if key == 'test':
         return COLOR_TEST
-    else:
-        return None
+    return None
 
 MAX_BARS = 3
 
-class MetricsPlotter(MetricsCalculator):
-    def plot(self, info: MinimalFullState, metrics: dict[str, typing.Any], figsize: tuple[float, float] | None) -> list[Figure]:
+class MetricsPlotter(MetricsCalculator): # type: ignore
+    def plot(
+        self,
+        info: MinimalFullState,
+        metrics: dict[str, typing.Any],
+        figsize: tuple[float, float] | None,
+    ) -> list[Figure]:
         raise NotImplementedError
 
 CategoricItem = tuple[typing.Any, torch.Tensor | int]
@@ -45,8 +61,13 @@ C = typing.TypeVar('C', bound=CategoricItem)
 BinaryMultiLabelItem = tuple[typing.Any, torch.Tensor | list[int]]
 B = typing.TypeVar('B', bound=BinaryMultiLabelItem)
 
-class MetricsFileDirectPlotter(MetricsCalculator):
-    def __init__(self, plotter: MetricsPlotter, file_path: str, figsize: tuple[float, float] | None = None):
+class MetricsFileDirectPlotter(MetricsCalculator): # type: ignore
+    def __init__(
+        self,
+        plotter: MetricsPlotter,
+        file_path: str,
+        figsize: tuple[float, float] | None = None,
+    ):
         self.plotter = plotter
         self.file_path = file_path
         self.figsize = figsize
@@ -78,13 +99,22 @@ class MetricsItemPlotter(typing.Generic[M]):
     def run(self, params: MetricsCalculatorParams) -> M:
         raise NotImplementedError
 
-    def plot(self, info: MinimalFullState, metric: M, figsize: tuple[float, float] | None) -> list[Figure]:
+    def plot(
+        self,
+        info: MinimalFullState,
+        metric: M,
+        figsize: tuple[float, float] | None,
+    ) -> list[Figure]:
         raise NotImplementedError
 
     def as_plotter(self) -> MetricsPlotter:
         return MetricsListPlotter(items=[self])
 
-    def as_file_plotter(self, file_path: str, figsize: tuple[float, float] | None = None) -> MetricsFileDirectPlotter:
+    def as_file_plotter(
+        self,
+        file_path: str,
+        figsize: tuple[float, float] | None = None,
+    ) -> MetricsFileDirectPlotter:
         return MetricsFileDirectPlotter(
             plotter=self.as_plotter(),
             file_path=file_path,
@@ -94,13 +124,19 @@ T = typing.TypeVar('T', bound=MetricsItemPlotter)
 
 class MetricsListPlotter(MetricsPlotter, typing.Generic[T]):
     def __init__(self, items: list[T | None]):
+        super().__init__()
         self.items = [i for i in items if i is not None]
 
     def run(self, params: MetricsCalculatorParams) -> dict[str, typing.Any]:
         result: dict[str, typing.Any] = { item.name: item.run(params) for item in self.items }
         return result
 
-    def plot(self, info: MinimalFullState, metrics: dict[str, typing.Any], figsize: tuple[float, float] | None) -> list[Figure]:
+    def plot(
+        self,
+        info: MinimalFullState,
+        metrics: dict[str, typing.Any],
+        figsize: tuple[float, float] | None,
+    ) -> list[Figure]:
         figs: list[Figure] = []
         for item in self.items:
             metric = metrics.get(item.name)
@@ -109,7 +145,13 @@ class MetricsListPlotter(MetricsPlotter, typing.Generic[T]):
         return figs
 
 class MainMetrics(MetricsItemPlotter[dict[str, None]]):
-    def __init__(self, name: str, no_loss=False, no_accuracy=False, no_time=False):
+    def __init__(
+        self,
+        name: str,
+        no_loss: bool = False,
+        no_accuracy: bool = False,
+        no_time: bool = False,
+    ):
         super().__init__(name=name)
         self.no_loss = no_loss
         self.no_accuracy = no_accuracy
@@ -118,7 +160,12 @@ class MainMetrics(MetricsItemPlotter[dict[str, None]]):
     def run(self, params: MetricsCalculatorParams) -> dict[str, None]:
         return dict()
 
-    def plot(self, info: MinimalFullState, metric: dict[str, None], figsize: tuple[float, float] | None) -> list[Figure]:
+    def plot(
+        self,
+        info: MinimalFullState,
+        metric: dict[str, None],
+        figsize: tuple[float, float] | None,
+    ) -> list[Figure]:
         train_losses: list[tuple[int, float]] = info.train_results.losses
         train_accuracies: list[tuple[int, float]] = info.train_results.accuracies
         train_times: list[tuple[int, float]] = info.train_results.times
@@ -160,7 +207,12 @@ class MainMetrics(MetricsItemPlotter[dict[str, None]]):
                 if val_accuracies and len(val_accuracies) == len(epochs):
                     epochs = [epoch for epoch, _ in val_accuracies]
                     accuracies = [accuracy for _, accuracy in val_accuracies]
-                    ax2.plot(epochs, accuracies, '-', label='Validation Accuracy', color=COLOR_VALIDATION)
+                    ax2.plot(
+                        epochs,
+                        accuracies,
+                        '-',
+                        label='Validation Accuracy',
+                        color=COLOR_VALIDATION)
                 ax2.set_ylabel('Accuracy')
 
             if not self.no_time:
@@ -198,8 +250,8 @@ class DatasetsAmountsMetrics(MetricsItemPlotter[dict[str, int]]):
 
         if isinstance(dataset, typing.Sized):
             return len(dataset)
-        else:
-            return len(list([d for d in dataset]))
+
+        return len([d for d in dataset]) # pylint: disable=unnecessary-comprehension
 
     def run(self, params: MetricsCalculatorParams) -> dict[str, int]:
         return dict(
@@ -208,7 +260,12 @@ class DatasetsAmountsMetrics(MetricsItemPlotter[dict[str, int]]):
             test=self.dataset_amount(self.datasets.test),
         )
 
-    def plot(self, info: MinimalFullState, metric: dict[str, int], figsize: tuple[float, float] | None) -> list[Figure]:
+    def plot(
+        self,
+        info: MinimalFullState,
+        metric: dict[str, int],
+        figsize: tuple[float, float] | None,
+    ) -> list[Figure]:
         keys: list[str] = list(metric.keys())
         values: list[int] = list(metric.values())
         fig = plt.figure(figsize=figsize)
@@ -233,7 +290,7 @@ class DatasetsCategoricLabelsMetrics(MetricsItemPlotter[dict[str, list[int]]], t
         if not dataset:
             return result
 
-        for input, target in dataset:
+        for _, target in dataset:
             label_idx = int(target.item()) if isinstance(target, torch.Tensor) else int(target)
             diff = (label_idx+1) - len(result)
 
@@ -251,7 +308,12 @@ class DatasetsCategoricLabelsMetrics(MetricsItemPlotter[dict[str, list[int]]], t
             test=self.dataset_amounts(self.datasets.test),
         )
 
-    def plot(self, info: MinimalFullState, metric: dict[str, list[int]], figsize: tuple[float, float] | None) -> list[Figure]:
+    def plot(
+        self,
+        info: MinimalFullState,
+        metric: dict[str, list[int]],
+        figsize: tuple[float, float] | None,
+    ) -> list[Figure]:
         figs: list[Figure] = []
 
         for key, all_values in metric.items():
@@ -275,7 +337,10 @@ class DatasetsCategoricLabelsMetrics(MetricsItemPlotter[dict[str, list[int]]], t
 
         return figs
 
-class DatasetsBinaryLabelsMetrics(MetricsItemPlotter[dict[str, list[tuple[int, int]]]], typing.Generic[B]):
+class DatasetsBinaryLabelsMetrics(
+    MetricsItemPlotter[dict[str, list[tuple[int, int]]]],
+    typing.Generic[B],
+):
     def __init__(self, name: str, labels: list[str], datasets: DatasetGroup[B]):
         super().__init__(name=name)
         self.datasets = datasets
@@ -287,7 +352,7 @@ class DatasetsBinaryLabelsMetrics(MetricsItemPlotter[dict[str, list[tuple[int, i
         if not dataset:
             return result
 
-        for input, target in dataset:
+        for _, target in dataset:
             items = target.detach().tolist() if isinstance(target, torch.Tensor) else target
             for i, t in enumerate(items):
                 if i < len(result):
@@ -303,7 +368,12 @@ class DatasetsBinaryLabelsMetrics(MetricsItemPlotter[dict[str, list[tuple[int, i
             test=self.dataset_amounts(self.datasets.test),
         )
 
-    def plot(self, info: MinimalFullState, metric: dict[str, list[tuple[int, int]]], figsize: tuple[float, float] | None) -> list[Figure]:
+    def plot(
+        self,
+        info: MinimalFullState,
+        metric: dict[str, list[tuple[int, int]]],
+        figsize: tuple[float, float] | None,
+    ) -> list[Figure]:
         figs: list[Figure] = []
 
         for key, all_values in metric.items():
@@ -317,7 +387,12 @@ class DatasetsBinaryLabelsMetrics(MetricsItemPlotter[dict[str, list[tuple[int, i
 
             df = pd.DataFrame(data, columns=['group', 'label', 'val'])
             fig = plt.figure(figsize=figsize)
-            sns.barplot(data=df, x='val', y='label', hue='group', orient='v' if len(df) <= MAX_BARS else 'h')
+            sns.barplot(
+                data=df,
+                x='val',
+                y='label',
+                hue='group',
+                orient='v' if len(df) <= MAX_BARS else 'h')
             plt.legend(loc='center left', bbox_to_anchor=(1, 0.5))
             plt.title(f"[{self.name}] Datasets - Binary Labels - {key}")
             figs.append(fig)
@@ -325,7 +400,13 @@ class DatasetsBinaryLabelsMetrics(MetricsItemPlotter[dict[str, list[tuple[int, i
         return figs
 
 class TruePredictedClassMetrics(MetricsItemPlotter[dict[str, typing.Any]], typing.Generic[C]):
-    def __init__(self, name: str, categories: list[str], dataset: Dataset[C], executor: BatchExecutor[typing.Any, typing.Any] | None = None):
+    def __init__(
+        self,
+        name: str,
+        categories: list[str],
+        dataset: Dataset[C],
+        executor: BatchExecutor[typing.Any, typing.Any] | None = None,
+    ):
         super().__init__(name=name)
         self.categories = categories
         self.dataset = dataset
@@ -348,17 +429,18 @@ class TruePredictedClassMetrics(MetricsItemPlotter[dict[str, typing.Any]], typin
                 if executor:
                     params = BatchExecutorParams(
                         model=model,
-                        input=input_batch,
-                        last_output=None)
-                    full_output = executor.run(params)
-                    output = executor.main_output(full_output)
+                        input=input_batch)
+                    output: torch.Tensor = executor.run(params)
                 else:
-                    output: torch.Tensor = model(input_batch)
+                    output = model(input_batch)
 
                 idx_out = int(output.squeeze(0).argmax().item())
-                idx_target = int(target.item()) if isinstance(target, torch.Tensor) else int(target)
+                idx_target = (
+                    int(target.item())
+                    if isinstance(target, torch.Tensor)
+                    else int(target))
 
-                if idx_target >= 0 and idx_target < size and idx_out >= 0 and idx_out < size:
+                if 0 <= idx_target < size and 0 <= idx_out < size:
                     counter += 1
                     matrix[idx_target, idx_out] += 1
 
@@ -368,7 +450,12 @@ class TruePredictedClassMetrics(MetricsItemPlotter[dict[str, typing.Any]], typin
         confmat, amount = self.confusion_matrix(params.model)
         return dict(confmat=confmat, amount=amount)
 
-    def plot(self, info: MinimalFullState, metric: dict[str, typing.Any], figsize: tuple[float, float] | None) -> list[Figure]:
+    def plot(
+        self,
+        info: MinimalFullState,
+        metric: dict[str, typing.Any],
+        figsize: tuple[float, float] | None,
+    ) -> list[Figure]:
         figs: list[Figure] = []
         category_names = self.categories
         amount = metric.get('amount', 0)
@@ -376,7 +463,13 @@ class TruePredictedClassMetrics(MetricsItemPlotter[dict[str, typing.Any]], typin
 
         if confmat is not None:
             fig = plt.figure(figsize=figsize)
-            sns.heatmap(confmat, annot=True, fmt='', cmap='Blues', xticklabels=category_names, yticklabels=category_names)
+            sns.heatmap(
+                confmat,
+                annot=True,
+                fmt='',
+                cmap='Blues',
+                xticklabels=category_names,
+                yticklabels=category_names)
             plt.title(f"[{self.name}] True vs Predicted Classes - Amount: {amount}")
             plt.ylabel('True')
             plt.xlabel('Predicted')
@@ -406,9 +499,12 @@ class TruePredictedBinaryMetrics(MetricsItemPlotter[dict[str, typing.Any]], typi
 
                 for i in range(n_labels):
                     idx_out = round(output[i].item())
-                    idx_target = int(target[i].item()) if isinstance(target, torch.Tensor) else int(target[i])
+                    idx_target = (
+                        int(target[i].item())
+                        if isinstance(target, torch.Tensor)
+                        else int(target[i]))
 
-                    if idx_target >= 0 and idx_target < size and idx_out >= 0 and idx_out < size:
+                    if 0 <= idx_target < size and 0 <= idx_out < size:
                         matrix[i, idx_target, idx_out] += 1
 
             return matrix
@@ -423,7 +519,12 @@ class TruePredictedBinaryMetrics(MetricsItemPlotter[dict[str, typing.Any]], typi
 
         return result
 
-    def plot(self, info: MinimalFullState, metric: dict[str, np.ndarray], figsize: tuple[float, float] | None) -> list[Figure]:
+    def plot(
+        self,
+        info: MinimalFullState,
+        metric: dict[str, np.ndarray],
+        figsize: tuple[float, float] | None,
+    ) -> list[Figure]:
         figs: list[Figure] = []
         category_names = self.categories
 
@@ -432,7 +533,13 @@ class TruePredictedBinaryMetrics(MetricsItemPlotter[dict[str, typing.Any]], typi
 
             if confmat is not None:
                 fig = plt.figure(figsize=figsize)
-                sns.heatmap(confmat, annot=True, fmt='', cmap='Blues', xticklabels=category_names, yticklabels=category_names)
+                sns.heatmap(
+                    confmat,
+                    annot=True,
+                    fmt='',
+                    cmap='Blues',
+                    xticklabels=category_names,
+                    yticklabels=category_names)
                 plt.title(f"[{self.name}] [{label}] True vs Predicted Classes")
                 plt.ylabel('True')
                 plt.xlabel('Predicted')
@@ -441,17 +548,22 @@ class TruePredictedBinaryMetrics(MetricsItemPlotter[dict[str, typing.Any]], typi
         return figs
 
 class SHAPMetrics(MetricsItemPlotter[dict[str, typing.Any]]):
-    def __init__(self, name: str, features: list[str], datasets: DatasetGroup[tuple[torch.Tensor, torch.Tensor]]):
+    def __init__(
+        self,
+        name: str,
+        features: list[str],
+        datasets: DatasetGroup[tuple[torch.Tensor, torch.Tensor]],
+    ):
         super().__init__(name=name)
         self.datasets = datasets
         self.features = features
 
-    def _get_shap(self):
+    def _get_shap(self): # type: ignore
         with warnings.catch_warnings():
             # filter shap/plots/colors/_colorconv.py:819:
             # Converting `np.inexact` or `np.floating` to a dtype is deprecated
             warnings.simplefilter("ignore", category=DeprecationWarning)
-            import shap
+            import shap # pylint: disable=import-outside-toplevel
 
         return shap
 
@@ -474,7 +586,12 @@ class SHAPMetrics(MetricsItemPlotter[dict[str, typing.Any]]):
 
         return dict(shap_values=shap_values, data=test_data, expected=e.expected_value)
 
-    def plot(self, info: MinimalFullState, metric: dict[str, typing.Any], figsize: tuple[float, float] | None) -> list[Figure]:
+    def plot(
+        self,
+        info: MinimalFullState,
+        metric: dict[str, typing.Any],
+        figsize: tuple[float, float] | None,
+    ) -> list[Figure]:
         figs: list[Figure] = []
         shap_values: np.ndarray | None = metric.get('shap_values')
         data: np.ndarray | None = metric.get('data')
